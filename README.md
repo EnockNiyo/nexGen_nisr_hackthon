@@ -23,14 +23,6 @@ Youth unemployment poses a critical barrier to Rwanda's Vision 2050 of becoming 
 
 ---
 
-## **Objectives**
-
-- **Forecast Youth Unemployment**: Develop a robust predictive model for regional and demographic trends.
-- **Provide Intervention Recommendations**: Use data insights to address specific risk factors contributing to unemployment.
-- **Enable Continuous Monitoring**: Deploy a real-time dashboard to assess intervention outcomes and inform policy adjustments.
-
----
-
 ## **Live Application**
 
 Experience the live deployment of this solution:  
