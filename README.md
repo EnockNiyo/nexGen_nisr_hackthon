@@ -29,7 +29,12 @@ Experience the live deployment of this solution:
 **[NexGen NISR Hackathon Application](https://nexgennisrhackthon-mmfekdzm6gvdmfsnshiii5.streamlit.app/)**
 
 ---
+## **Documentation File **
 
+Ducumentation file is also uploaded in repository with PDF format:  
+**[NexGen NISR Hackathon Application](https://nexgennisrhackthon-mmfekdzm6gvdmfsnshiii5.streamlit.app/)**
+
+---
 ## **Project Team**
 
 ### NexGen Solution Team Members:
