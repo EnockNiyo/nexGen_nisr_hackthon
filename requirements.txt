@@ -10,4 +10,5 @@ openpyxl
 streamlit-option-menu
 numerize
 streamlit-extras
+statsmodels
 
