@@ -1,0 +1,13 @@
+streamlit
+pandas>=2.0.0
+plotly>=5.0.0
+numpy>=1.21.0
+scikit-learn
+matplotlib
+seaborn
+scipy
+openpyxl
+streamlit-option-menu
+numerize
+streamlit-extras
+
