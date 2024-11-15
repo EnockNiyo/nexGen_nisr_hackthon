@@ -38,7 +38,7 @@ Ducumentation file is also uploaded in repository with PDF format ,is called  " 
 ---
 ## **video File **
 
-Ducumentation file is also uploaded in repository with PDF format ,is called  " NexGen_NISR_Hackathon (1).pdf "  
+
 
 **[NexGen NISR Hackathon video ](https://drive.google.com/file/d/10OgioiX93VYwxHRtJduTykoiOI55DT5V/view?usp=drive_link)**
 
