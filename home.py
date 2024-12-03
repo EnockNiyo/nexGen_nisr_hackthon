@@ -15,15 +15,42 @@ from datetime import datetime
 import numpy as np
 import plotly.graph_objects as go
 
-# Load the dataset
-df = pd.read_csv('youth_unemployment_dataset.csv')
-
 # Set up Streamlit layout
 st.set_page_config(page_title="Youth Unemployment Analytics Dashboard", page_icon="📊", layout="wide")
+# Create a file uploader
+# Create a file uploader
+uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+
+# Load default dataset
+DEFAULT_DATASET_PATH = "youth_unemployment_dataset.csv"
+df = None
+
+# Load dataset dynamically
+if uploaded_file is not None:
+    try:
+        # Load uploaded dataset
+        df = pd.read_csv(uploaded_file)
+        st.success("Dataset loaded successfully!")
+    except Exception as e:
+        st.error(f"An error occurred while loading the uploaded file: {e}")
+else:
+    try:
+        # Load default dataset
+        st.info("No New dataset uploaded. Loading the default dataset...")
+        df = pd.read_csv(DEFAULT_DATASET_PATH)
+       # st.success("Default dataset loaded successfully!")
+    except Exception as e:
+        st.error(f"Failed to load the default dataset: {e}")
+        st.stop()
+
+# Display dataset preview
+#st.write("### Dataset Preview:")
+#st.dataframe(df.head())
+
 
 # Title
 st.markdown(
-    "<h1 style='text-align: center; color: #333; margin-top: -45px;'>Youth Unemployment Analytics Dashboard</h1>",
+    "<h1 style='text-align: center; color: #302; margin-top: -45px;'>Youth Unemployment Analytics Dashboard</h1>",
     unsafe_allow_html=True)
 with open('style.css') as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -46,8 +73,31 @@ filtered_df = df[
 if gender != "All":
     filtered_df = filtered_df[filtered_df['gender'] == gender]
 
-# Display filtered data summary
-st.write("Data Summary:", filtered_df.describe())
+# Title and button in columns
+# Initialize session state for toggle
+if "show_add_form" not in st.session_state:
+    st.session_state.show_add_form = False  # Form is initially closed
+
+# Title and button in columns
+col1, col2 = st.columns([4, 1])  # Adjust widths
+with col1:
+    st.markdown("#### Data Summary")  # Title
+with col2:
+    if st.button("Add New Data"):
+        # Toggle the state
+        st.session_state.show_add_form = not st.session_state.show_add_form
+
+# Conditional display based on toggle state
+if st.session_state.show_add_form:
+    # Use the full width for the "Add New Data" section
+    with st.container():
+        st.markdown("### Add New Data")
+        exec(open("add_data.py").read())  # Dynamically execute `add_data.py` code
+else:
+    # Display filtered data summary
+    st.dataframe(filtered_df.describe())
+
+
 
 # Top metrics
 # Custom CSS for card styling and Font Awesome
