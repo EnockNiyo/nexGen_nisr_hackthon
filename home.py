@@ -682,10 +682,10 @@ if dfs is not None and 'weight2' in dfs.columns and 'D12A' in dfs.columns:
     model.fit(X_train, y_train)
 
     # Predictions and evaluation
-    y_pred = model.predict(X_test)
-    st.write("Classification Report:")
-    st.text(classification_report(y_test, y_pred))
-    st.write(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+    # y_pred = model.predict(X_test)
+    # st.write("Classification Report:")
+    # st.text(classification_report(y_test, y_pred))
+    # st.write(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
 
     # Visualize results
     district_data['prediction'] = model.predict(X)
