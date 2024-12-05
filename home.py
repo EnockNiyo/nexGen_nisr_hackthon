@@ -589,29 +589,8 @@ with tabs[0]:
         )
         st.plotly_chart(age_dist_fig, use_container_width=False)
 
-# District Trends (using filtered `dfs` dataset)
-if filtered_dfs is not None and 'code_dis' in filtered_dfs.columns:
-    district_counts = filtered_dfs['code_dis'].value_counts().reset_index()
-    district_counts.columns = ['District', 'Count']
-    with dem2:
-        st.markdown('<div class="chart-title">District Trends</div>', unsafe_allow_html=True)
-        district_trend_fig = px.bar(
-            district_counts,
-            x='District',
-            y='Count',
-            text='Count',
-            labels={'District': 'District', 'Count': 'Number of Records'},
-            title="District Trends",
-            height=300,
-            width=370
-        )
-        district_trend_fig.update_traces(textposition='outside')  # Show counts outside bars
-        st.plotly_chart(district_trend_fig, use_container_width=False)
-else:
-    with dem2:
-        st.warning("District data (code_dis) is not available in the filtered dataset.")
 
-with dem1:
+with dem2:
     if filtered_dfs is not None and 'Code_UR' in filtered_dfs.columns:
         st.markdown('<div class="chart-title">Urban vs. Rural Distribution by Region</div>', unsafe_allow_html=True)
 
@@ -656,7 +635,7 @@ with st.container():
             labels={'District': 'District', 'Count': 'Number of Records'},
             title="District Trends",
             height=300,
-            width=370
+            width=990
         )
         district_trend_fig.update_traces(textposition='outside')
         st.plotly_chart(district_trend_fig, use_container_width=False, key='district_trends')
