@@ -466,12 +466,12 @@ st.markdown("""
     <style>
     /* Main Dashboard Title */
     .dashboard-header {
-        background:rgb(240, 243, 245);
-        color: white;
+       
+        color: rgb(0, 174, 239);
         padding: 1rem 1rem 1rem 1rem;
         border-radius: 10px;
         margin-bottom: 1rem;
-        # box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    
         position: relative;
         overflow: hidden;
     }
