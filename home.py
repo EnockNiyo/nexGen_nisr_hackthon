@@ -14,12 +14,31 @@ from sklearn.metrics import accuracy_score
 from datetime import datetime
 import numpy as np
 import plotly.graph_objects as go
-
+from sklearn.metrics import classification_report, accuracy_score
+from statsmodels.tsa.arima.model import ARIMA
 # Set up Streamlit layout
 st.set_page_config(page_title="Youth Unemployment Analytics Dashboard", page_icon="📊", layout="wide")
 # Create a file uploader
 # Create a file uploader
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+file_path = "nisr_dataset.csv"  # Replace with your actual file path
+
+
+# Handling missing data
+
+
+@st.cache_data
+def load_data(file_paths):
+    try:
+        nisr_data = pd.read_csv(file_paths, encoding='latin1')
+        return nisr_data
+    except UnicodeDecodeError:
+        st.error("Error reading file. Please check the file encoding.")
+        return None
+
+
+# Load data
+dfs = load_data(file_path)
 
 # Load default dataset
 DEFAULT_DATASET_PATH = "youth_unemployment_dataset.csv"
@@ -43,11 +62,6 @@ else:
         st.error(f"Failed to load the default dataset: {e}")
         st.stop()
 
-# Display dataset preview
-#st.write("### Dataset Preview:")
-#st.dataframe(df.head())
-
-
 # Title
 st.markdown(
     "<h1 style='text-align: center; color: #302; margin-top: -45px;'>Youth Unemployment Analytics Dashboard</h1>",
@@ -64,14 +78,34 @@ education_levels = st.sidebar.multiselect("Select Education Level(s)", options=d
                                           default=df['education_level'].unique())
 
 # Apply Filters
+# Define a mapping for regions to provinces
+region_to_province = {
+    "Northern": "Northern Province",
+    "Kigali": "Kigali city",
+    "Southern": "Southern Province",
+    "Eastern": "Eastern Province",
+    "Western": "Western Province"
+}
+
+# Add mapping for province before filtering
+df['province_mapped'] = df['region'].map(region_to_province)
+
+# Apply filters from Sidebar
 filtered_df = df[
     (df['age'] >= age_range[0]) &
     (df['age'] <= age_range[1]) &
     (df['region'].isin(regions)) &
     (df['education_level'].isin(education_levels))
-    ]
+]
 if gender != "All":
     filtered_df = filtered_df[filtered_df['gender'] == gender]
+
+# Apply filter to dfs using the mapped province
+if dfs is not None and 'province' in dfs.columns:
+    filtered_dfs = dfs[dfs['province'].isin(filtered_df['province_mapped'].dropna())]
+else:
+    filtered_dfs = None
+
 
 # Title and button in columns
 # Initialize session state for toggle
@@ -351,81 +385,6 @@ elif selected_option == "Future Predictions":
         st.error("Please provide a valid dataset in the variable `filtered_df`.")
 
 
-# def forecast_youth_unemployment():
-#     def forecast_youth_unemployment():
-#         # Data for Youth Unemployment (assumed structure similar to your previous project)
-#         # Group by Year and relevant category (e.g., education level, age group)
-#         unemployment_data = df[df['current_employment_sector'] == 'None']  # Adjust condition based on your dataset
-#         combined_data_edu = unemployment_data.groupby(['Year', 'Education Level']).size().reset_index(name='Unemployed')
-#         historical_data_edu = combined_data_edu.groupby(['Year', 'Education Level'])['Unemployed'].sum().reset_index()
-#         historical_data_edu['Yearly Change (%)'] = historical_data_edu.groupby('Education Level')[
-#                                                        'Unemployed'].pct_change() * 100
-#         avg_change_per_edu = historical_data_edu.groupby('Education Level')['Yearly Change (%)'].mean().reset_index()
-#
-#         # Forecasting Function
-#         def forecast_data(historical_data, avg_change_data, level_column, forecast_years, randomness_factor):
-#             future_forecast = pd.DataFrame()
-#             for level in avg_change_data[level_column].unique():
-#                 last_year = historical_data[historical_data[level_column] == level]['Year'].max()
-#                 last_value = historical_data[historical_data[level_column] == level]['Unemployed'].iloc[-1]
-#                 avg_change = avg_change_data[avg_change_data[level_column] == level]['Yearly Change (%)'].values[0]
-#
-#                 future_years = list(range(last_year + 1, last_year + forecast_years + 1))
-#                 future_values = []
-#
-#                 for year in future_years:
-#                     random_adjustment = np.random.uniform(-randomness_factor, randomness_factor)
-#                     next_value = last_value * (1 + avg_change / 100 + random_adjustment)
-#                     future_values.append(next_value)
-#                     last_value = next_value
-#
-#                 future_data = pd.DataFrame({
-#                     'Year': future_years,
-#                     level_column: [level] * len(future_years),
-#                     'Unemployed': future_values
-#                 })
-#                 future_forecast = pd.concat([future_forecast, future_data])
-#
-#             return future_forecast
-#
-#         # Define the number of years for the forecast and a randomness factor
-#         forecast_years = st.sidebar.slider('Select number of years to forecast', min_value=1, max_value=11, value=5)
-#         randomness_factor = 0.5  # Can adjust based on how much variability you want
-#
-#         # Forecast Youth Unemployment by Education Level
-#         future_forecast_edu = forecast_data(historical_data_edu, avg_change_per_edu, 'Education Level', forecast_years,
-#                                             randomness_factor)
-#
-#         # Combine Historical and Forecasted Data for Education Level
-#         combined_forecast_edu = pd.concat(
-#             [historical_data_edu[['Year', 'Education Level', 'Unemployed']], future_forecast_edu])
-#
-#         # Plot Youth Unemployment by Education Level
-#         fig1 = px.line(combined_forecast_edu, x='Year', y='Unemployed', color='Education Level',
-#                        title=f'Youth Unemployment Forecast by Education Level for Next {forecast_years} Years',
-#                        labels={'Unemployed': 'Number of Unemployed Youth', 'Year': 'Years'})
-#
-#         # Show the chart
-#         st.plotly_chart(fig1, use_container_width=True)
-
-
-# def sideBar():
-#     with st.sidebar:
-#         selected = option_menu(
-#             menu_title="Main Menu",
-#             options=["Home", "Youth Unemployment Forecasting"],
-#             icons=["house", "chart-line"],
-#             menu_icon="cast",
-#             default_index=0
-#         )
-#     if selected == "Youth Unemployment Forecasting":
-#         st.subheader(f"Page: {selected}")
-#         forecast_youth_unemployment()
-#
-#
-# # Run the application
-# sideBar()
-
 # Calculate the metrics
 st.markdown("### Key Metrics")
 total_users = len(filtered_df)
@@ -606,15 +565,19 @@ tabs = st.tabs([
     "💼 Additional"
 ])
 
+
+
+
 # Demographics Overview
 with tabs[0]:
     st.markdown('<p class="employment-header">Demographics Overview</p>', unsafe_allow_html=True)
-    # st.markdown("### Demographics Overview")
+
+    # Demographics columns for layout
     dem1, dem2 = st.columns(2, gap='small')
-    # Aggregate data for Age Distribution by Gender
+
+    # Age Distribution by Gender (using the filtered `df` dataset)
     age_gender_counts = filtered_df.groupby("age").size().reset_index(name="count")
     with dem1:
-        # Age Distribution by Gender using Pie Chart
         st.markdown('<div class="chart-title">Age Distribution</div>', unsafe_allow_html=True)
         age_dist_fig = px.pie(
             age_gender_counts,
@@ -622,27 +585,240 @@ with tabs[0]:
             values="count",
             height=300,
             width=370,
-            # title="Age Distribution",
-            hole=0.3  # Adds a donut hole for better visualization
+            hole=0.3
         )
         st.plotly_chart(age_dist_fig, use_container_width=False)
-    with dem2:
-        # Aggregate data for Urban vs. Rural Distribution by Region
-        st.markdown('<div class="chart-title">Urban vs. Rural Distribution by Region</div>', unsafe_allow_html=True)
-        urban_rural_counts = filtered_df.groupby(["region", "location_type"]).size().reset_index(name="count")
 
-        # Urban vs. Rural Distribution by Region using Bar Chart
+# District Trends (using filtered `dfs` dataset)
+if filtered_dfs is not None and 'code_dis' in filtered_dfs.columns:
+    district_counts = filtered_dfs['code_dis'].value_counts().reset_index()
+    district_counts.columns = ['District', 'Count']
+    with dem2:
+        st.markdown('<div class="chart-title">District Trends</div>', unsafe_allow_html=True)
+        district_trend_fig = px.bar(
+            district_counts,
+            x='District',
+            y='Count',
+            text='Count',
+            labels={'District': 'District', 'Count': 'Number of Records'},
+            title="District Trends",
+            height=300,
+            width=370
+        )
+        district_trend_fig.update_traces(textposition='outside')  # Show counts outside bars
+        st.plotly_chart(district_trend_fig, use_container_width=False)
+else:
+    with dem2:
+        st.warning("District data (code_dis) is not available in the filtered dataset.")
+
+with dem1:
+    if filtered_dfs is not None and 'Code_UR' in filtered_dfs.columns:
+        st.markdown('<div class="chart-title">Urban vs. Rural Distribution by Region</div>', unsafe_allow_html=True)
+
+        # Group filtered data by region and urban/rural
+        filtered_dfs['region_mapped'] = filtered_dfs['province'].map({v: k for k, v in region_to_province.items()})
+        urban_rural_counts = filtered_dfs.groupby(["region_mapped", "Code_UR"]).size().reset_index(name="count")
+
+        # Create the bar chart
         urban_rural_fig = px.bar(
             urban_rural_counts,
-            x="region",
+            x="region_mapped",
             y="count",
+            color="Code_UR",
             height=300,
             width=370,
-            color="location_type",
-            barmode="group",
-            # title="Urban vs. Rural Distribution by Region",
+            barmode="group",  # Group bars for urban and rural
+            labels={'region_mapped': 'Region', 'count': 'Count', 'Code_UR': 'Urban/Rural'}
         )
         st.plotly_chart(urban_rural_fig, use_container_width=False)
+    else:
+        st.warning("Required columns are missing in the filtered dataset.")
+
+
+# Handle missing data
+dfs = dfs.dropna(subset=['weight2', 'D12A', 'LFS_year'])
+
+# Convert necessary columns to numeric
+dfs['LFS_year'] = pd.to_numeric(dfs['LFS_year'], errors='coerce')
+dfs['D12A'] = pd.to_numeric(dfs['D12A'], errors='coerce')
+
+# District Trends Visualization
+with st.container():
+    if filtered_dfs is not None and 'code_dis' in filtered_dfs.columns:
+        district_counts = filtered_dfs['code_dis'].value_counts().reset_index()
+        district_counts.columns = ['District', 'Count']
+        st.markdown('<div class="chart-title">District Trends</div>', unsafe_allow_html=True)
+        district_trend_fig = px.bar(
+            district_counts,
+            x='District',
+            y='Count',
+            text='Count',
+            labels={'District': 'District', 'Count': 'Number of Records'},
+            title="District Trends",
+            height=300,
+            width=370
+        )
+        district_trend_fig.update_traces(textposition='outside')
+        st.plotly_chart(district_trend_fig, use_container_width=False, key='district_trends')
+
+# Prediction Model - RandomForest for Unemployment Classification
+if dfs is not None and 'weight2' in dfs.columns and 'D12A' in dfs.columns:
+    # Prepare data for prediction
+    district_data = dfs.groupby('code_dis').agg({
+        'weight2': 'sum',  # Total weight
+        'D12A': 'mean'  # Average income
+    }).reset_index()
+
+    # Define target (example: high if D12A > median, else low)
+    median_income = district_data['D12A'].median()
+    district_data['unemployment_level'] = np.where(district_data['D12A'] > median_income, 'Low', 'High')
+
+    # Train model
+    X = district_data[['weight2', 'D12A']]
+    y = district_data['unemployment_level']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+    model = RandomForestClassifier(random_state=42)
+    model.fit(X_train, y_train)
+
+    # Predictions and evaluation
+    y_pred = model.predict(X_test)
+    st.write("Classification Report:")
+    st.text(classification_report(y_test, y_pred))
+    st.write(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+
+    # Visualize results
+    district_data['prediction'] = model.predict(X)
+    fig = px.bar(
+        district_data,
+        x='code_dis',
+        y='D12A',
+        color='prediction',
+        title="Predicted Unemployment Levels by District",
+        labels={'code_dis': 'District', 'D12A': 'Average Income'}
+    )
+    st.plotly_chart(fig, key='unemployment_prediction_plot')
+
+else:
+    st.warning("Required columns (weight2, D12A) are missing in the dataset.")
+
+
+
+
+# Future Predictions using Linear Extrapolation
+
+# Clean and Prepare the Data
+if dfs is not None:
+    # Drop rows with NaN in required columns
+    dfs = dfs.dropna(subset=['LFS_year', 'D12A', 'weight2', 'code_dis'])
+
+    # Convert necessary columns to numeric
+    dfs['LFS_year'] = pd.to_numeric(dfs['LFS_year'], errors='coerce')
+    dfs['D12A'] = pd.to_numeric(dfs['D12A'], errors='coerce')
+    dfs['weight2'] = pd.to_numeric(dfs['weight2'], errors='coerce')
+
+    # Check if the data is still valid after cleaning
+    if dfs.empty:
+        st.warning("No valid data available for prediction.")
+    else:
+        # District-level aggregation (weight2 and D12A)
+        district_data = dfs.groupby('code_dis').agg({
+            'weight2': 'sum',  # Total weight in the district
+            'D12A': 'mean'  # Average income in the district
+        }).reset_index()
+
+        # Retain LFS_year (use the first value from the group, assuming all rows have the same year)
+        district_data['LFS_year'] = dfs.groupby('code_dis')['LFS_year'].first().values
+
+        # Trend Calculation: Calculate the annual growth rate for D12A
+        district_data['growth_rate'] = district_data['D12A'].pct_change().fillna(0)
+
+        # Use the historical average growth rate to extrapolate future values
+        avg_growth_rate = district_data['growth_rate'].mean()
+
+        # Add a progress bar to select the number of years to forecast
+        forecast_years = st.slider('Select Number of Years to Forecast', min_value=1, max_value=10, value=5)
+        st.write(f"Forecasting for {forecast_years} years...")
+
+        # Initialize an empty DataFrame to store the forecasted data for all districts
+        all_forecasts = []
+
+        # Loop over each district and calculate future predictions
+        for district in district_data['code_dis'].unique():
+            district_subset = district_data[district_data['code_dis'] == district]
+
+            # Simulate future income for both low and high unemployment levels using the average growth rate and randomness
+            np.random.seed(42)  # for reproducibility
+            randomness_factor_low = np.random.normal(0, 0.01, size=forecast_years)  # Slight randomness for low unemployment
+            randomness_factor_high = np.random.normal(0, 0.02, size=forecast_years)  # Slightly higher randomness for high unemployment
+
+            # Predict future income for both low and high unemployment levels
+            future_years = np.arange(district_subset['LFS_year'].max() + 1, district_subset['LFS_year'].max() + forecast_years + 1)
+
+            future_income_low = district_subset['D12A'].iloc[-1] * (1 + avg_growth_rate + randomness_factor_low)
+            future_income_high = district_subset['D12A'].iloc[-1] * (1 + avg_growth_rate + randomness_factor_high)
+
+            # Use the same weight for simplicity (could also vary)
+            future_weight = district_subset['weight2'].iloc[-1]
+
+            # Create DataFrames for future predictions for both low and high unemployment levels
+            future_df_low = pd.DataFrame({
+                'LFS_year': future_years,
+                'predicted_income': future_income_low,
+                'predicted_weight2': future_weight,
+                'predicted_unemployment': 'Low',
+                'code_dis': district  # Add district info for plotting
+            })
+
+            future_df_high = pd.DataFrame({
+                'LFS_year': future_years,
+                'predicted_income': future_income_high,
+                'predicted_weight2': future_weight,
+                'predicted_unemployment': 'High',
+                'code_dis': district  # Add district info for plotting
+            })
+
+            # Calculate percentage change for low and high unemployment levels
+            last_value = district_subset['D12A'].iloc[-1]
+            future_df_low['percentage_change'] = ((future_df_low['predicted_income'] - last_value) / last_value) * 100
+            future_df_high['percentage_change'] = ((future_df_high['predicted_income'] - last_value) / last_value) * 100
+
+            # Combine both DataFrames for the district
+            future_df_combined = pd.concat([future_df_low[['LFS_year', 'percentage_change', 'predicted_unemployment', 'code_dis', 'predicted_income']],
+                                            future_df_high[['LFS_year', 'percentage_change', 'predicted_unemployment', 'code_dis', 'predicted_income']]])
+
+            # Append the forecasted data for this district
+            all_forecasts.append(future_df_combined)
+
+        # Combine all the district forecasts into a single DataFrame
+        combined_forecast_df = pd.concat(all_forecasts, ignore_index=True)
+
+        # Visualize the forecast for both high and low unemployment levels by district using a bar chart
+        forecast_fig = px.bar(
+            combined_forecast_df,
+            x='code_dis',  # District code on the x-axis
+            y='predicted_income',  # Predicted income on the y-axis
+            color='predicted_unemployment',  # Color by unemployment level
+            title="Predicted Income in Future Years by District (Using Trend and Randomness)",
+            labels={'code_dis': 'District', 'predicted_income': 'Predicted Income'},
+            height=400,
+            width=800,
+            hover_data={'code_dis': True, 'predicted_income': True, 'predicted_unemployment': True, 'percentage_change': True}
+        )
+
+        # Display the plot
+        st.plotly_chart(forecast_fig, use_container_width=True)
+
+        # Display forecasted values with percentages
+        st.write("Future Forecasts for Low Unemployment:")
+        st.write(future_df_low[['LFS_year', 'percentage_change']])
+
+        st.write("Future Forecasts for High Unemployment:")
+        st.write(future_df_high[['LFS_year', 'percentage_change']])
+
+else:
+    st.warning("Dataset not loaded. Please upload a valid dataset.")
+
 
 # Education & Skills
 with tabs[1]:
@@ -1463,24 +1639,7 @@ with tabs[4]:
 
 with tabs[5]:  # Adjust based on the index of this new tab
     # Load the dataset with error handling for encoding issues
-    file_path = "nisr_dataset.csv"  # Replace with your actual file path
 
-    # Handling missing data
-
-
-
-    @st.cache_data
-    def load_data(file_paths):
-        try:
-            nisr_data = pd.read_csv(file_paths, encoding='latin1')
-            return nisr_data
-        except UnicodeDecodeError:
-            st.error("Error reading file. Please check the file encoding.")
-            return None
-
-
-    # Load data
-    dfs = load_data(file_path)
 
     if dfs is not None:
         # Display dataset header
