@@ -21,6 +21,7 @@ st.set_page_config(page_title="Youth Unemployment Analytics Dashboard", page_ico
 # Create a file uploader
 # Create a file uploader
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+
 file_path = "nisr_dataset.csv"  # Replace with your actual file path
 
 
@@ -69,6 +70,15 @@ st.markdown(
 with open('style.css') as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+# Apply custom CSS to style the sidebar
+# Import required libraries
+import streamlit as st
+
+st.markdown("""
+   
+    </style>
+""", unsafe_allow_html=True)
+
 # Sidebar Filters
 st.sidebar.header("Filters")
 age_range = st.sidebar.slider("Select Age Range", 16, 25, (16, 25))
@@ -76,6 +86,7 @@ gender = st.sidebar.selectbox("Select Gender", ["All", "Male", "Female"])
 regions = st.sidebar.multiselect("Select Region(s)", options=df['region'].unique(), default=df['region'].unique())
 education_levels = st.sidebar.multiselect("Select Education Level(s)", options=df['education_level'].unique(),
                                           default=df['education_level'].unique())
+
 
 # Apply Filters
 # Define a mapping for regions to provinces
@@ -105,6 +116,8 @@ if dfs is not None and 'province' in dfs.columns:
     filtered_dfs = dfs[dfs['province'].isin(filtered_df['province_mapped'].dropna())]
 else:
     filtered_dfs = None
+
+
 
 
 # Title and button in columns
@@ -798,6 +811,111 @@ if dfs is not None:
 else:
     st.warning("Dataset not loaded. Please upload a valid dataset.")
 
+
+
+
+# forecast year based on age,BO8,education_levels, etc
+
+# Clean and Prepare the Data
+if df is not None and dfs is not None:
+    # Drop rows with NaN in required columns for both dataframes
+    df = df.dropna(subset=['age', 'education_level'])
+    dfs = dfs.dropna(subset=['B08', 'status1'])
+
+    # Merge df and dfs on the common column (e.g., 'index' or another column)
+    merged_data = pd.merge(df, dfs, left_index=True, right_index=True, how='inner')
+
+    # Check if the merge was successful
+    if merged_data.empty:
+        st.warning("The merged dataset is empty. Please check your input data.")
+    else:
+        # Convert 'status1' into numerical values for prediction
+        status_mapping = {
+            'Employed': 1,
+            'Unemployed': 0,  # Focus on both 'Employed' and 'Unemployed'
+            'Out of labour force': 2  # Optionally handle this status if needed
+        }
+        merged_data['status1'] = merged_data['status1'].map(status_mapping)
+
+        # Map 'B08' from 'No'/'Yes' to 0/1
+        merged_data['B08'] = merged_data['B08'].map({'No': 0, 'Yes': 1})
+
+        # One-hot encode `education_level`
+        merged_data = pd.get_dummies(merged_data, columns=['education_level'], drop_first=True)
+
+        # Prepare the data for prediction (we use both employed and unemployed)
+        X = merged_data[['age', 'B08'] + [col for col in merged_data.columns if 'education_level' in col]]  # Features
+        y = merged_data['status1']  # Target variable
+
+        # Check if there is enough data to train the model
+        if len(X) < 2:
+            st.warning("Not enough data to split for training. Please ensure your dataset has sufficient data.")
+        else:
+            # Train-test split
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+            # Train a RandomForestClassifier model
+            model = RandomForestClassifier(random_state=42)
+            model.fit(X_train, y_train)
+
+            # Make predictions
+            y_pred = model.predict(X_test)
+
+
+
+            # Simulate future data and predict unemployment status
+            st.header("Future Predictions")
+
+            # Add a unique key to the slider to avoid duplicate element ID issues
+            forecast_years = st.slider('Select Number of Years for Forecasting', min_value=1, max_value=10, value=5,
+                                       key="forecast_slider")
+
+            # Simulate aging over the forecasted years (age capped to the range 16 to 25)
+            future_data = X.copy()
+            future_data['age'] = future_data['age'] + forecast_years  # Increase age by forecast years
+
+            # Cap age to the range 16-25
+            future_data['age'] = np.clip(future_data['age'], 16, 25)  # Ensure age is between 16 and 25
+
+            # Predict future unemployment status
+            future_predictions = model.predict(future_data)
+            future_data['predicted_status1'] = future_predictions
+
+            # Prepare data for bar chart visualization
+            future_data['predicted_status1_label'] = future_data['predicted_status1'].map(
+                {0: 'Employed', 1: 'Unemployed'})
+
+            # Group by age and predicted status to count the number of people in each category
+            status_counts = future_data.groupby(['age', 'predicted_status1_label']).size().reset_index(name='count')
+
+            # Check if both 'Employed' and 'Unemployed' are present in the data
+            if status_counts.empty:
+                st.warning("No predictions for Unemployed status.")
+            else:
+                # Plot future predictions using a bar chart
+                forecast_fig = px.bar(
+                    status_counts,
+                    x='age',  # Plot age on the x-axis
+                    y='count',  # Count of people in each status (Unemployed)
+                    color='predicted_status1_label',  # Color by the unemployment status
+                    title="Future Unemployment Status Predictions by Age",
+                    labels={'age': 'Age (Years)', 'count': 'Count', 'predicted_status1_label': 'Predicted Status'},
+                    height=400,
+                    width=800
+                )
+
+                # Customizing color legend names
+                forecast_fig.update_layout(
+                    coloraxis_colorbar=dict(
+                        tickvals=[0, 1],
+                        ticktext=["Unemployed", "Unemployed"]
+                    )
+                )
+
+                st.plotly_chart(forecast_fig, use_container_width=True)
+
+else:
+    st.warning("Datasets not loaded. Please upload valid datasets.")
 
 # Education & Skills
 with tabs[1]:
@@ -1647,3 +1765,14 @@ with tabs[5]:  # Adjust based on the index of this new tab
 
     else:
         st.warning("Data could not be loaded. Check the file path and encoding.")
+
+
+#theme
+# hide_st_style="""
+#
+# <style>
+# #MainMenu {visibility:hidden;}
+# footer {visibility:hidden;}
+# header {visibility:hidden;}
+# </style>
+# """
