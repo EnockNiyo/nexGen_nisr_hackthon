@@ -697,7 +697,7 @@ else:
 
 
 
-# Future Predictions using Linear Extrapolation
+# Future Predictions
 
 # Clean and Prepare the Data
 if dfs is not None:
@@ -791,7 +791,7 @@ if dfs is not None:
             x='code_dis',  # District code on the x-axis
             y='predicted_income',  # Predicted income on the y-axis
             color='predicted_unemployment',  # Color by unemployment level
-            title="Predicted Income in Future Years by District (Using Trend and Randomness)",
+            title="Predicted Income in Future Years by District ",
             labels={'code_dis': 'District', 'predicted_income': 'Predicted Income'},
             height=400,
             width=800,
