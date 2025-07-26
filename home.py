@@ -4,7 +4,7 @@ import time
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from pygments.lexers import go
+# from pygments.lexers import go
 from sklearn.ensemble import RandomForestClassifier
 from streamlit_option_menu import option_menu  # Import the option_menu function
 import streamlit.components.v1 as components
@@ -15,19 +15,13 @@ from datetime import datetime
 import numpy as np
 import plotly.graph_objects as go
 from sklearn.metrics import classification_report, accuracy_score
-from statsmodels.tsa.arima.model import ARIMA
+# from statsmodels.tsa.arima.model import ARIMA
 # Set up Streamlit layout
 st.set_page_config(page_title="Youth Unemployment Analytics Dashboard", page_icon="📊", layout="wide")
-# Create a file uploader
-# Create a file uploader
-uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
-
+# Load datasets
 file_path = "nisr_dataset.csv"  # Replace with your actual file path
 
-
 # Handling missing data
-
-
 @st.cache_data
 def load_data(file_paths):
     try:
@@ -37,31 +31,19 @@ def load_data(file_paths):
         st.error("Error reading file. Please check the file encoding.")
         return None
 
-
 # Load data
 dfs = load_data(file_path)
 
 # Load default dataset
 DEFAULT_DATASET_PATH = "youth_unemployment_dataset.csv"
-df = None
 
-# Load dataset dynamically
-if uploaded_file is not None:
-    try:
-        # Load uploaded dataset
-        df = pd.read_csv(uploaded_file)
-        st.success("Dataset loaded successfully!")
-    except Exception as e:
-        st.error(f"An error occurred while loading the uploaded file: {e}")
-else:
-    try:
-        # Load default dataset
-        st.info("No New dataset uploaded. Loading the default dataset...")
-        df = pd.read_csv(DEFAULT_DATASET_PATH)
-       # st.success("Default dataset loaded successfully!")
-    except Exception as e:
-        st.error(f"Failed to load the default dataset: {e}")
-        st.stop()
+try:
+    # Load default dataset
+    df = pd.read_csv(DEFAULT_DATASET_PATH)
+    st.success("Dataset loaded successfully!")
+except Exception as e:
+    st.error(f"Failed to load the default dataset: {e}")
+    st.stop()
 
 # Title
 st.markdown(
@@ -81,7 +63,7 @@ st.markdown("""
 
 # Sidebar Filters
 st.sidebar.header("Filters")
-age_range = st.sidebar.slider("Select Age Range", 16, 25, (16, 25))
+age_range = st.sidebar.slider("Select Age Range", 16, 30, (16, 30))
 gender = st.sidebar.selectbox("Select Gender", ["All", "Male", "Female"])
 regions = st.sidebar.multiselect("Select Region(s)", options=df['region'].unique(), default=df['region'].unique())
 education_levels = st.sidebar.multiselect("Select Education Level(s)", options=df['education_level'].unique(),
@@ -120,29 +102,9 @@ else:
 
 
 
-# Title and button in columns
-# Initialize session state for toggle
-if "show_add_form" not in st.session_state:
-    st.session_state.show_add_form = False  # Form is initially closed
-
-# Title and button in columns
-col1, col2 = st.columns([4, 1])  # Adjust widths
-with col1:
-    st.markdown("#### Data Summary")  # Title
-with col2:
-    if st.button("Add New Data"):
-        # Toggle the state
-        st.session_state.show_add_form = not st.session_state.show_add_form
-
-# Conditional display based on toggle state
-if st.session_state.show_add_form:
-    # Use the full width for the "Add New Data" section
-    with st.container():
-        st.markdown("### Add New Data")
-        exec(open("add_data.py").read())  # Dynamically execute `add_data.py` code
-else:
-    # Display filtered data summary
-    st.dataframe(filtered_df.describe())
+# Title and data summary
+st.markdown("#### Data Summary")
+st.dataframe(filtered_df.describe())
 
 
 
@@ -588,19 +550,29 @@ with tabs[0]:
     # Demographics columns for layout
     dem1, dem2 = st.columns(2, gap='small')
 
-    # Age Distribution by Gender (using the filtered `df` dataset)
+    # Age Distribution by Age (now supports 16-30)
     age_gender_counts = filtered_df.groupby("age").size().reset_index(name="count")
+    age_gender_counts = age_gender_counts.sort_values("age")
     with dem1:
         st.markdown('<div class="chart-title">Age Distribution</div>', unsafe_allow_html=True)
-        age_dist_fig = px.pie(
-            age_gender_counts,
-            names="age",
-            values="count",
-            height=300,
-            width=370,
-            hole=0.3
-        )
-        st.plotly_chart(age_dist_fig, use_container_width=False)
+        if age_gender_counts.empty:
+            st.info("No data available for the selected age range.")
+        else:
+            # Use a continuous color scale mapped to age for clarity
+            import plotly.colors
+            color_scale = px.colors.sequential.Viridis
+            color_map = {age: color_scale[i % len(color_scale)] for i, age in enumerate(sorted(age_gender_counts['age'].unique()))}
+            age_colors = [color_map[age] for age in age_gender_counts['age']]
+            age_dist_fig = px.pie(
+                age_gender_counts,
+                names="age",
+                values="count",
+                height=300,
+                width=370,
+                hole=0.3
+            )
+            age_dist_fig.update_traces(textinfo='percent+label', marker=dict(colors=age_colors))
+            st.plotly_chart(age_dist_fig, use_container_width=False)
 
 
 with dem2:
@@ -870,12 +842,12 @@ if df is not None and dfs is not None:
             forecast_years = st.slider('Select Number of Years for Forecasting', min_value=1, max_value=10, value=5,
                                        key="forecast_slider")
 
-            # Simulate aging over the forecasted years (age capped to the range 16 to 25)
+            # Simulate aging over the forecasted years (age capped to the range 16 to 30)
             future_data = X.copy()
             future_data['age'] = future_data['age'] + forecast_years  # Increase age by forecast years
 
-            # Cap age to the range 16-25
-            future_data['age'] = np.clip(future_data['age'], 16, 25)  # Ensure age is between 16 and 25
+            # Cap age to the range 16-30
+            future_data['age'] = np.clip(future_data['age'], 16, 30)  # Ensure age is between 16 and 30
 
             # Predict future unemployment status
             future_predictions = model.predict(future_data)
@@ -902,14 +874,6 @@ if df is not None and dfs is not None:
                     labels={'age': 'Age (Years)', 'count': 'Count', 'predicted_status1_label': 'Predicted Status'},
                     height=400,
                     width=800
-                )
-
-                # Customizing color legend names
-                forecast_fig.update_layout(
-                    coloraxis_colorbar=dict(
-                        tickvals=[0, 1],
-                        ticktext=["Unemployed", "Unemployed"]
-                    )
                 )
 
                 st.plotly_chart(forecast_fig, use_container_width=True)
@@ -1292,8 +1256,8 @@ with tabs[2]:
     st.markdown('<div class="chart-title">Income Distribution by Age and Sector</div>', unsafe_allow_html=True)
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     # st.markdown('<p class="metric-header">Income Distribution by Age and Sector</p>', unsafe_allow_html=True)
-    age_bins = [16, 18, 21, 25]
-    age_labels = ["16-18", "19-21", "22-25"]
+    age_bins = [16, 20, 25, 30]
+    age_labels = ["16-19", "20-24", "25-30"]
     filtered_df["age_group"] = pd.cut(filtered_df["age"], bins=age_bins, labels=age_labels, right=True)
 
     age_income_fig = px.box(
@@ -1462,8 +1426,7 @@ with tabs[3]:
             width=370,
             # title="Intervention Cost vs. Employment Success Rate",
             labels={"intervention_cost": "Intervention Cost (RWF)",
-                    "employment_success_rate": "Employment Success Rate (%)"},
-            trendline="ols"
+                    "employment_success_rate": "Employment Success Rate (%)"}
         )
         st.plotly_chart(cost_effectiveness_fig, use_container_width=False)
 
@@ -1712,9 +1675,8 @@ with tabs[4]:
             y="youth_unemployment_rate",
             height=300,
             width=370,
-            color="region",
-            # title="Regional Employment Rate vs. Youth Unemployment Rate",
-            trendline="ols"
+            color="region"
+            # title="Regional Employment Rate vs. Youth Unemployment Rate"
         )
         st.plotly_chart(employment_vs_unemployment_fig, use_container_width=False)
 

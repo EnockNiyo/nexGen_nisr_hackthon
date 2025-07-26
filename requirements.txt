@@ -1,14 +1,100 @@
-streamlit
+# Core Streamlit and Data Science Libraries
+streamlit>=1.28.0
 pandas>=2.0.0
-plotly>=5.0.0
 numpy>=1.21.0
-scikit-learn
-matplotlib
-seaborn
-scipy
-openpyxl
-streamlit-option-menu
-numerize
-streamlit-extras
-statsmodels
+plotly>=5.0.0
+
+# Machine Learning Libraries
+scikit-learn>=1.3.0
+
+# Visualization Libraries
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Scientific Computing
+scipy>=1.9.0
+
+# File Handling
+openpyxl>=3.0.0
+
+# Streamlit Extensions
+streamlit-option-menu>=0.3.0
+streamlit-extras>=0.2.0
+
+# Data Processing
+numerize>=0.12
+
+# Statistical Analysis
+statsmodels>=0.14.0
+
+# Additional Dependencies
+# These are automatically installed as dependencies of the above packages
+# but listed here for completeness:
+# - altair (for streamlit charts)
+# - pyarrow (for pandas)
+# - protobuf (for streamlit)
+# - requests (for streamlit)
+# - pillow (for image processing)
+# - watchdog (for streamlit file watching)
+# - gitpython (for streamlit)
+# - tornado (for streamlit)
+# - jinja2 (for altair)
+# - jsonschema (for altair)
+# - colorama (for click)
+# - cachetools (for streamlit)
+# - blinker (for streamlit)
+# - tenacity (for streamlit)
+# - toml (for streamlit)
+# - typing-extensions (for streamlit)
+# - python-dateutil (for pandas)
+# - pytz (for pandas)
+# - tzdata (for pandas)
+# - six (for python-dateutil)
+# - charset-normalizer (for requests)
+# - idna (for requests)
+# - urllib3 (for requests)
+# - certifi (for requests)
+# - joblib (for scikit-learn)
+# - threadpoolctl (for scikit-learn)
+# - contourpy (for matplotlib)
+# - cycler (for matplotlib)
+# - fonttools (for matplotlib)
+# - kiwisolver (for matplotlib)
+# - pyparsing (for matplotlib)
+# - et-xmlfile (for openpyxl)
+# - patsy (for statsmodels)
+# - packaging (for statsmodels)
+# - markupsafe (for jinja2)
+# - attrs (for jsonschema)
+# - jsonschema-specifications (for jsonschema)
+# - referencing (for jsonschema)
+# - rpds-py (for jsonschema)
+# - gitdb (for gitpython)
+# - smmap (for gitdb)
+# - faker (for streamlit-faker)
+# - beautifulsoup4 (for favicon)
+# - soupsieve (for beautifulsoup4)
+# - lxml (for markdownlit)
+# - markdown (for markdownlit)
+# - favicon (for markdownlit)
+# - pymdown-extensions (for markdownlit)
+# - pyyaml (for pymdown-extensions)
+# - altex (for streamlit-extras)
+# - entrypoints (for streamlit-extras)
+# - htbuilder (for streamlit-extras)
+# - markdownlit (for streamlit-extras)
+# - prometheus-client (for streamlit-extras)
+# - st-annotated-text (for streamlit-extras)
+# - st-theme (for streamlit-extras)
+# - streamlit-avatar (for streamlit-extras)
+# - streamlit-camera-input-live (for streamlit-extras)
+# - streamlit-card (for streamlit-extras)
+# - streamlit-embedcode (for streamlit-extras)
+# - streamlit-faker (for streamlit-extras)
+# - streamlit-image-coordinates (for streamlit-extras)
+# - streamlit-keyup (for streamlit-extras)
+# - streamlit-toggle-switch (for streamlit-extras)
+# - streamlit-vertical-slider (for streamlit-extras)
+# - validators (for streamlit-extras)
+# - narwhals (for plotly)
 
