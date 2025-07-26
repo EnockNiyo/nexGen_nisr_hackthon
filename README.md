@@ -1,8 +1,7 @@
-# **NexGen Solutions NISR Hackathon 2024**
 
 **_Predicting and Addressing Youth Unemployment Through Data-Driven Solutions_**
 
-This repository presents the **NexGen NISR Hackathon Project**, an advanced data science initiative developed to tackle youth unemployment in Rwanda. By leveraging predictive analytics, tailored interventions, and real-time monitoring, this project aims to empower decision-makers with actionable insights and effective tools to address one of the nation's most pressing socio-economic challenges.
+This repository presents the an advanced data science initiative developed to tackle youth unemployment in Rwanda. By leveraging predictive analytics, tailored interventions, and real-time monitoring, this project aims to empower decision-makers with actionable insights and effective tools to address one of the nation's most pressing socio-economic challenges.
 
 ---
 
